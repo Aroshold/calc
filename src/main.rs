@@ -42,7 +42,7 @@ fn begin() {
             continue;
         }
 
-        if trimmed.is_empty() {
+        if trimmed.is_empty() | trimmed.eq_ignore_ascii_case("q") {
             println!("{}", "Exiting...".bold().green());
             break;
         }
@@ -89,10 +89,8 @@ fn formatting(formule: &str) -> Result<Vec<String>, String> {
             dot_count = 0;
         } else if c == ' ' {
             continue;
-        
         } else if c == '!' {
             continue;
-        
         } else {
             return Err(format!("Invalid character: '{}'", c));
         }
@@ -101,18 +99,15 @@ fn formatting(formule: &str) -> Result<Vec<String>, String> {
     }
 
     match formule.chars().next() {
-    Some('!') => {
-        println!("{}{:?}","DEBUG: ".bold().green(), formule);
-        println!("{}{:?}","DEBUG len: ".bold().green(), formule.len());
-    }
-    _ => {}
+        Some('!') => {
+            println!("{}{:?}", "DEBUG: ".bold().green(), formule);
+            println!("{}{:?}", "DEBUG len: ".bold().green(), formule.len());
+        }
+        _ => {}
     }
 
     Ok(stack)
 }
-
-
-
 
 fn calculate(formula: Vec<String>) -> f32 {
     let mut values: Vec<f32> = Vec::new(); // стек чисел
@@ -151,7 +146,7 @@ fn calculate(formula: Vec<String>) -> f32 {
     while let Some(op) = operators.pop() {
         apply_operator(&mut values, &op);
     }
-    
+
     let result = values.pop().unwrap();
     println!("Result: {}", result);
     result
@@ -165,13 +160,19 @@ fn apply_operator(values: &mut Vec<f32>, op: &str) {
         "-" => left - right,
         "*" => left * right,
         "/" => {
-        if right == 0.0 {
-            panic!("Division by zero");
+            if right == 0.0 {
+                println!(
+                    "{}: {}",
+                    "Warning".yellow(),
+                    "Division by zero. Defaults to infinity."
+                );
+                f32::INFINITY
+            } else {
+                left / right
+            }
         }
-        left / right
-        },
         "^" => left.powf(right),
-        _ => panic!("Unknown operator"),
+        _ => unreachable!("Unknown operator"),
     };
     values.push(result);
 }
@@ -182,6 +183,6 @@ fn precedence(op: &str) -> i32 {
         "*" | "/" => 2,
         "^" => 3,
         "(" => 0,
-        _ => panic!("Unknown operator"),
+        _ => unreachable!("Unknown operator"),
     }
 }
